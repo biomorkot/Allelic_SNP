@@ -1,0 +1,51 @@
+# Here we get all exon positions
+# Both separate exon positions and paired positions: for instance 
+# Intron is from 1 to 18 and from 50 to 90
+# Separate is [1, 18, 50, 90]
+# Paired is [[1, 18], [50, 90]]
+
+# Function for creating pairs -- from [1, 2, 3, 4] -> [[1, 2], [3, 4]]
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
+d_single = {} # dict for separate positions, here key is chromosome and value is list with exon  positions
+d_pairs = {} # the same, but for paired exon  positions
+
+with open('./knownGeneCanonical', 'r') as file: # Canonical isoforms 
+    for line in file:
+        line = line.strip().split('\t')
+
+        off_start, off_end = int(line[5]), int(line[6]) # CDS start, CDS end
+
+        # Get coordinates of exons
+        start, end = line[8][:-1].split(','), line[9][:-1].split(',')
+        start_end = (list(zip(start, end)))
+        start_end = [list(i) for i in start_end]
+        exons = [[int(j) for j in i] for i in start_end]   
+
+
+
+        # get exons according CDS (because not exons in annotation are in CDS)
+        lst_exons = []
+        lst_lengths = []
+        for exon in exons:
+            start, end = exon[0], exon[1]
+            if not(start <= off_start <= end and start <= off_end <= end): # many exons
+                if (start <= off_start <= end or start >= off_start) and (start <= off_end <= end or end <= off_end):
+                    if start <= off_start <= end:
+                        lst_lengths.append(abs(off_start - end))
+                        lst_exons.append([off_start, end])
+                    elif start <= off_end <= end:
+                        lst_lengths.append(abs(start - off_end))
+                        lst_exons.append([start, off_end])
+                    else:
+                        lst_lengths.append(abs(start - end))
+                        lst_exons.append([start, end])
+            else:
+                lst_exons.append([off_start, off_end])
+        with open('Homo_exon_coordinates', 'a') as out:
+            out.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(line[0], line[1], line[2], int(line[3]), int(line[4]), int(line[5]), int(line[6]), int(line[7]), lst_exons))
+
