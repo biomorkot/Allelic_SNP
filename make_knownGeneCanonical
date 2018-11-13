@@ -1,0 +1,24 @@
+# remove long noncoding RNAs (their start and end of CDS are the same coordinates)
+with open('./knownGene_parsed.txt', 'a') as out:
+    with open('./knownGene.txt', 'r') as file:
+        for line1 in file:
+            line = line1.strip().split('\t')
+            if int(line[5]) != int(line[6]):
+                out.write('{}\n'.format(line1.strip()))
+
+# get 22 000 genes comparing knownGene and knownCanonical                 
+with open('./knownGene_parsed.txt', 'r') as file:
+    for line1 in file:
+        line = line1.strip().split('\t')
+
+        gene_id = line[0]
+
+        with open('./knownCanonical.txt', 'r') as canonical:
+            for line2 in canonical:
+                line2 = line2.strip().split('\t')
+
+                gene_id_canonical = line2[4]
+
+                if gene_id == gene_id_canonical:
+                    with open('knownGeneCanonical', 'a') as out:
+                        out.write('{}\n'.format(line1.strip()))
